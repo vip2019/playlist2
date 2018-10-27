@@ -1,54 +1,43 @@
-// globals
-var _player = document.createElement("audio"),
-    _playerWrap = document.createElement("span"),
-  _playlist = document.getElementById("playlist");
-  //_stop = document.getElementById("stop");
-
-_player.id = "player";
-_player.setAttribute("controls","");
-
-_playerWrap.appendChild(_player);
-_playerWrap.className = "playerWrap";
-
-// functions
-function nextElemSibling( el ) {
-    do { el = el.nextSibling } 
-  while ( el && el.nodeType !== 1 );
-    return el;
-}
-
-function playlistItemClick(clickedElement) {
-  var selected = _playlist.querySelector(".selected");
-  if (selected) {
-    selected.classList.remove("selected");
-  }
-  clickedElement.classList.add("selected");
-  clickedElement.appendChild(_playerWrap);
-
-  _player.src = clickedElement.getAttribute("data-mp3");
-  _player.play();
-}
-
-function playNext() {
-  var selected = _playlist.querySelector("li.selected");
-  if (selected && nextElemSibling(selected)) {
-    playlistItemClick(nextElemSibling(selected));
-  } else {
-    selected.classList.remove("selected");
-    selected.removeChild(_playerWrap);
-  }
-
-}
-
-// event listeners
-//_stop.addEventListener("click", function() {
-//  _player.pause();
-//});
-
-_player.addEventListener("ended", playNext);
-
-_playlist.addEventListener("click", function(e) {
-  if (e.target && e.target.nodeName === "LI") {
-    playlistItemClick(e.target);
-  }
+var myPlayer,
+    playlistWrapper = document.getElementById('playlistWrapper');
+// handle loadedmetadata just once, it fires again with each video load
+videojs("myPlayerID").one('loadedmetadata', function () {
+    var myPlayer = this,
+        i,
+        iMax,
+        playlistItem,
+        playlistItems,
+        thumbnailImg,
+        playlistData = myPlayer.playlist(),
+        videoItem;
+    iMax = playlistData.length;
+    for (i = 0; i < iMax; i++) {
+        videoItem = playlistData[i];
+        // create the playlist item and set its class
+        playlistItem = document.createElement('div');
+            playlistItem.setAttribute('class', 'bcls-playlist-item');
+// create the thumbnail img and set its class
+thumbnailImg = document.createElement('img');
+thumbnailImg.setAttribute('class', 'bcls-thumbnail');
+// set the src for the thumbnail
+thumbnailImg.setAttribute('src', videoItem.thumbnail);
+// save the index - need this to load the video
+thumbnailImg.setAttribute('data-playlist-index', i);
+// for best practice, set the alt attribute to the video name
+thumbnailImg.setAttribute('alt', videoItem.name);
+// now append the img to the item, and the item to the playlist
+playlistItem.appendChild(thumbnailImg);
+playlistWrapper.appendChild(playlistItem);
+    }
+    // function to load playlist items on click
+    function loadPlaylistItem () {
+        var index = this.getAttribute('data-playlist-index');
+        myPlayer.playlist.currentItem(parseInt(index, 10));
+        myPlayer.play();
+    };
+    playlistItems = document.getElementsByClassName('bcls-thumbnail');
+    iMax = playlistItems.length;
+    for (i = 0; i < iMax; i++) {
+        playlistItems[i].addEventListener('click', loadPlaylistItem);
+    }
 });
